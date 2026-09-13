@@ -1,0 +1,8 @@
+index-demo.html
+slideshow/index-demo.html
+*.bak-*
+.DS_Store
+**/.DS_Store
+_build/
+deploy-package-20260913.zip
+deploy-package-20260913/

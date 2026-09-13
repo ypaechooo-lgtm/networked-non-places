@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Archive — International Airport Archive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans+Condensed:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --black: #0c0c0c;
+    --rule: #282828;
+    --dim: #444;
+    --mid: #888;
+    --bright: #c8c8c8;
+    --white: #efefef;
+    --mono: 'IBM Plex Mono', monospace;
+    --cond: 'IBM Plex Sans Condensed', sans-serif;
+  }
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--black);
+    color: var(--white);
+    font-family: var(--mono);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  #header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: stretch;
+    padding: 0 24px 0;
+    min-height: 58px;
+    border-bottom: 1px solid var(--rule);
+    flex-shrink: 0;
+  }
+  #title-wrap { display: flex; flex-direction: column; justify-content: center; }
+  #title-label {
+    font-size: clamp(10px, 1vw, 13px);
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    color: var(--mid);
+    text-transform: uppercase;
+    margin-top: 14px;
+  }
+  #title-main {
+    font-size: clamp(14px, 1.6vw, 22px);
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--white);
+    margin-top: 3px;
+    margin-bottom: 14px;
+  }
+
+  /* ── HEADER SEARCH ── */
+  #search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 1px solid var(--rule);
+    padding-left: 20px;
+    height: 100%;
+  }
+  #search-label {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    color: var(--dim);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  #search-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 300;
+    color: var(--white);
+    width: 180px;
+    letter-spacing: 0.04em;
+    caret-color: var(--white);
+  }
+  #search-input::placeholder { color: var(--dim); }
+  #search-clear {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--dim);
+    cursor: pointer;
+    padding: 2px 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    user-select: none;
+  }
+  #search-clear.visible { opacity: 1; pointer-events: all; }
+  #search-clear:hover { color: var(--white); }
+
+  /* ── MAIN SCROLL AREA ── */
+  #main {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+  }
+  #main::-webkit-scrollbar { width: 4px; height: 4px; }
+  #main::-webkit-scrollbar-track { background: transparent; }
+  #main::-webkit-scrollbar-thumb { background: var(--rule); }
+
+  /* ── COLLAPSIBLE SECTIONS ── */
+  .section-bar { border-bottom: 1px solid var(--rule); }
+  .section-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 24px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .section-toggle:hover { background: rgba(255,255,255,0.02); }
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  .section-arrow {
+    font-size: 10px;
+    color: var(--dim);
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+  }
+  .section-arrow.open { transform: rotate(180deg); }
+  .section-body {
+    font-size: 11px;
+    line-height: 1.9;
+    color: var(--bright);
+    padding: 0 24px 18px;
+    max-width: 860px;
+    letter-spacing: 0.02em;
+    display: none;
+  }
+  .section-body.open { display: block; }
+  .section-body p + p { margin-top: 12px; }
+  .ae-block { margin-top: 18px; }
+  .ae-label {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: 5px;
+  }
+
+  /* ── DATASET DIVIDER ── */
+  #dataset-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 24px;
+    border-bottom: 1px solid var(--rule);
+  }
+  #dataset-label {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  #row-count { font-size: 10px; color: var(--dim); white-space: nowrap; }
+  #row-count span { color: var(--mid); }
+
+  /* ── TABLE ── */
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  thead { position: sticky; top: 0; z-index: 2; background: var(--black); }
+  th {
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dim);
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  th:hover { color: var(--mid); }
+  th .sort-arrow { margin-left: 4px; opacity: 0.4; }
+  th.sorted .sort-arrow { opacity: 1; color: var(--bright); }
+  .filter-row th { padding: 6px 16px; border-bottom: 1px solid var(--rule); cursor: default; }
+  .filter-row th:hover { color: var(--dim); }
+  .col-filter {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--dim);
+    outline: none;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--mid);
+    width: 100%;
+    padding: 2px 0;
+    caret-color: var(--white);
+  }
+  .col-filter::placeholder { color: var(--dim); opacity: 0.5; }
+  .col-filter:focus { border-color: var(--bright); color: var(--white); }
+  tbody tr { border-bottom: 1px solid var(--rule); transition: background 0.1s; }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+  td { padding: 10px 16px; color: var(--mid); vertical-align: middle; white-space: nowrap; }
+  td:first-child { color: var(--bright); max-width: 320px; white-space: normal; }
+  td.mono-dim { color: var(--dim); font-size: 10px; }
+  td.iata-cell { font-size: 13px; font-weight: 500; color: var(--white); letter-spacing: 0.06em; }
+  .thumb-cell { width: 60px; }
+  .thumb {
+    width: 48px; height: 48px;
+    object-fit: contain;
+    opacity: 0.7;
+    filter: grayscale(1) contrast(1.2);
+    transition: opacity 0.2s;
+  }
+  tbody tr:hover .thumb { opacity: 1; }
+  .no-img { color: var(--dim); font-size: 9px; }
+
+  /* ── FOOTER ── */
+  #footer {
+    border-top: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr;
+    height: 48px;
+    flex-shrink: 0;
+  }
+  .nav-btn {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+    color: var(--mid);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s, background 0.15s;
+  }
+  .nav-btn:hover { color: var(--white); background: rgba(255,255,255,0.04); }
+  .nav-divider { background: var(--rule); }
+</style>
+</head>
+<body>
+
+<header id="header">
+  <div id="title-wrap">
+    <div id="title-label">Networked Non-Places</div>
+    <div id="title-main">International Airport Archive</div>
+  </div>
+  <div id="search-wrap">
+    <span id="search-label">Search</span>
+    <input id="search-input" type="text" placeholder="airport, city, country...">
+    <span id="search-clear">&#x2715;</span>
+  </div>
+</header>
+
+<div id="main">
+
+  <!-- Overview — open by default -->
+  <div class="section-bar">
+    <div class="section-toggle" onclick="toggleSection('overview')">
+      <span class="section-label">Overview</span>
+      <span class="section-arrow open" id="arrow-overview">&#x2193;</span>
+    </div>
+    <div class="section-body open" id="body-overview">
+      <p>Networked Non-Places is an atlas of international airports reframed as relational geography. Instead of locating airports on the Earth's surface, the project redistributes them by relational weight: airport pairs bound by dense, reciprocal routes are drawn toward each other, while weakly connected airports drift outward. In this redrawn space, airports appear as networked non-places — nodes of transit defined less by identity than by infrastructure, codes, and connectivity. By re-mapping, this project turns the airport into both diagram and node, exposing how visually similar non-places occupy radically different roles in planetary mobility.</p>
+    </div>
+  </div>
+
+  <!-- Concept -->
+  <div class="section-bar">
+    <div class="section-toggle" onclick="toggleSection('concept')">
+      <span class="section-label">Concept: From Non-Place to Relational Geography</span>
+      <span class="section-arrow" id="arrow-concept">&#x2193;</span>
+    </div>
+    <div class="section-body" id="body-concept">
+      <p>The starting point of this project is Marc Aug&eacute;'s concept of the "non-place" — spaces designed primarily for circulation, transit, and temporary occupation. Airports are among the most representative non-places: highly standardised environments that function less as culturally specific locations and more as infrastructures that manage global mobility.</p>
+      <p>Rather than focusing on the cultural meaning of non-places, this project examines how airports produce geography through their connections. When observed individually, airports appear as isolated infrastructures scattered across the world. When considered through the network of routes linking them, they form a relational spatial system where distance and centrality are defined by connectivity rather than physical proximity.</p>
+      <p>Within this framework, an airport's significance is not determined by its geographic location but by its position within the network of routes. Airports with a large number of connections may become central nodes, while geographically prominent airports with fewer routes may appear relatively peripheral. This perspective resonates with David Harvey's time&#x2013;space compression and Manuel Castells's "space of flows" — frameworks that describe how infrastructures and networks reorganise spatial relationships.</p>
+    </div>
+  </div>
+
+  <!-- Methodology -->
+  <div class="section-bar">
+    <div class="section-toggle" onclick="toggleSection('method')">
+      <span class="section-label">Network Methodology</span>
+      <span class="section-arrow" id="arrow-method">&#x2193;</span>
+    </div>
+    <div class="section-body" id="body-method">
+      <p>The network map is not a geographic projection — it is a spatialization of relational data. Proximity here means connectivity. The layout was computed in Gephi using the ForceAtlas2 force-directed algorithm, which simulates attractive forces between connected nodes and repulsive forces between all nodes.</p>
+      <p>Edge weights between airports determine the strength of attraction: airport pairs with more shared routes are drawn closer together; airports with no direct connection exert no pull on each other. Breadth of connections determines centrality: an airport connecting to a wide and diverse set of other airports — across different regions and clusters — tends to move toward the centre of the layout. An airport whose routes are few or restricted to a limited region drifts toward the periphery, even if its local infrastructure is large.</p>
+    </div>
+  </div>
+
+  <!-- Case Studies -->
+  <div class="section-bar">
+    <div class="section-toggle" onclick="toggleSection('cases')">
+      <span class="section-label">Reading the Map: Airport Case Studies</span>
+      <span class="section-arrow" id="arrow-cases">&#x2193;</span>
+    </div>
+    <div class="section-body" id="body-cases">
+      <p>When airports are repositioned by connectivity, distinct patterns emerge. Densely connected hubs in Europe and North America form tight constellations. A second cluster forms around the Gulf and major Asian hubs, bridging Western Europe, East Asia, and parts of Africa. More fragmented groupings appear across Africa, South America, and Central Asia, reflecting thinner connectivity in the pre-2014 dataset. The network also reveals several outliers: airports with modest physical infrastructure that occupy central positions because of the diversity of their connections — and, conversely, airports with extensive footprints that remain peripheral because their international connectivity is limited.</p>
+      <div class="ae-block">
+        <div class="ae-label">DXB &#x2014; Dubai International Airport</div>
+        <p>Dubai functions as a bridge hub between Europe, Asia, and Africa. Its infrastructure — long parallel runways and a compact terminal cluster surrounded by extensive apron areas — indicates a layout optimised for long-haul transit. In the network map, DXB occupies a central position despite its Gulf location because its connections are numerous and widely distributed across multiple clusters.</p>
+      </div>
+      <div class="ae-block">
+        <div class="ae-label">ATL &#x2014; Hartsfield&#x2013;Jackson Atlanta International Airport</div>
+        <p>Atlanta is a prototypical domestic-international super-hub. Its multiple converging runways and extensive terminal complex are visible in the vector diagram. In the network layout, ATL appears at the core of the North American cluster, driven by a very high route count — many regional, but collectively generating substantial global connectivity.</p>
+      </div>
+      <div class="ae-block">
+        <div class="ae-label">LHR &#x2014; London Heathrow Airport</div>
+        <p>Heathrow's position highlights "internationality" as both infrastructure and regulation: border regimes, scheduling density, alliance routing, and intermodal access converge into a layered interface stack. In the network layout, LHR remains central within the European grouping and in the global mesh, reflecting its long-range connections and intercontinental transfer role.</p>
+      </div>
+      <div class="ae-block">
+        <div class="ae-label">JNB &#x2014; O. R. Tambo International Airport</div>
+        <p>O. R. Tambo illustrates anomalous centrality: modest in physical scale, yet occupying a central network position because it connects across clusters. This pattern — where the most connected airports are not necessarily the most central — reflects the bridging role that certain nodes play between otherwise weakly connected regions.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Assembly -->
+  <div class="section-bar">
+    <div class="section-toggle" onclick="toggleSection('data')">
+      <span class="section-label">Data Assembly</span>
+      <span class="section-arrow" id="arrow-data">&#x2193;</span>
+    </div>
+    <div class="section-body" id="body-data">
+      <p>This table constitutes the full dataset underlying the International Airport Archive — 823 international airports cross-referenced across three sources: Wikidata (SPARQL query on P31 = "international airport"), OurAirports (ICAO-validated coordinates and classification), and Kaggle/OpenFlights (commercial route data, frozen June 2014). Route connections are aggregated as edge weights; spatial positions derive from a ForceAtlas2 network layout computed in Gephi, where proximity reflects relational density rather than geographic distance. Each entry includes IATA and ICAO identifiers, coordinates, country, and an aerial vector diagram extracted from OpenStreetMap.</p>
+      <p>The route data is frozen at June 2014 and should be understood as a historical snapshot rather than a current map of global mobility. Each source — Wikidata, OurAirports, Kaggle/OpenFlights, OpenStreetMap — operates with its own update cycles and classification systems, and decisions about what counts as an "international airport" or which routes are recorded all shape what becomes visible here.</p>
+    </div>
+  </div>
+
+  <!-- Dataset -->
+  <div id="dataset-header">
+    <span id="dataset-label">Dataset</span>
+    <span id="row-count">Showing <span id="shown-count">&#x2014;</span> of <span id="total-count">&#x2014;</span> airports</span>
+  </div>
+
+  <table id="data-table">
+    <thead>
+      <tr id="header-row">
+        <th data-col="OurAirports_name">Airport <span class="sort-arrow">&#x2195;</span></th>
+        <th data-col="iata">IATA <span class="sort-arrow">&#x2195;</span></th>
+        <th data-col="icao">ICAO <span class="sort-arrow">&#x2195;</span></th>
+        <th data-col="countryLabel">Country <span class="sort-arrow">&#x2195;</span></th>
+        <th data-col="lat">Lat <span class="sort-arrow">&#x2195;</span></th>
+        <th data-col="lon">Lon <span class="sort-arrow">&#x2195;</span></th>
+        <th>Image</th>
+      </tr>
+      <tr class="filter-row" id="filter-row">
+        <th><input class="col-filter" data-col="OurAirports_name" placeholder="Filter..."></th>
+        <th><input class="col-filter" data-col="iata" placeholder="Filter..."></th>
+        <th><input class="col-filter" data-col="icao" placeholder="Filter..."></th>
+        <th><input class="col-filter" data-col="countryLabel" placeholder="Filter..."></th>
+        <th><input class="col-filter" data-col="lat" placeholder="Filter..."></th>
+        <th><input class="col-filter" data-col="lon" placeholder="Filter..."></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+</div><!-- /#main -->
+
+<footer id="footer">
+  <a href="../index.html" class="nav-btn">&#x2190; Network</a>
+  <div class="nav-divider"></div>
+  <a href="../slideshow/index.html" class="nav-btn">Traverse</a>
+</footer>
+
+<script>
+const COLS = ['OurAirports_name','iata','icao','countryLabel','lat','lon','filename'];
+let allRows = [];
+let filters  = {};
+let globalSearch = '';
+let sortCol = null, sortDir = 1;
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = [];
+    let cur = '', inQ = false;
+    for (const ch of lines[i] + ',') {
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+      else { cur += ch; }
+    }
+    const row = {};
+    headers.forEach((h, j) => row[h] = (vals[j] || '').replace(/^"|"$/g,'').trim());
+    rows.push(row);
+  }
+  return rows;
+}
+
+function getVisible() {
+  let rows = allRows;
+  if (globalSearch) {
+    const q = globalSearch.toLowerCase();
+    rows = rows.filter(r => COLS.some(c => (r[c]||'').toLowerCase().includes(q)));
+  }
+  Object.entries(filters).forEach(([col, val]) => {
+    if (!val) return;
+    const q = val.toLowerCase();
+    rows = rows.filter(r => (r[col]||'').toLowerCase().includes(q));
+  });
+  if (sortCol) {
+    rows = [...rows].sort((a, b) => {
+      const av = a[sortCol] || '', bv = b[sortCol] || '';
+      const an = parseFloat(av), bn = parseFloat(bv);
+      if (!isNaN(an) && !isNaN(bn)) return (an - bn) * sortDir;
+      return av.localeCompare(bv) * sortDir;
+    });
+  }
+  return rows;
+}
+
+function render() {
+  const visible = getVisible();
+  document.getElementById('shown-count').textContent = visible.length;
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  visible.forEach(r => {
+    const tr = document.createElement('tr');
+    const lat = parseFloat(r.lat||0).toFixed(4);
+    const lon = parseFloat(r.lon||0).toFixed(4);
+    tr.innerHTML = `
+      <td>${r.OurAirports_name || '&mdash;'}</td>
+      <td class="iata-cell">${r.iata || '&mdash;'}</td>
+      <td class="mono-dim">${r.icao || '&mdash;'}</td>
+      <td>${r.countryLabel || '&mdash;'}</td>
+      <td class="mono-dim">${lat}</td>
+      <td class="mono-dim">${lon}</td>
+      <td class="thumb-cell">${r.filename
+        ? `<img class="thumb" src="airport_vector/${r.filename}" loading="lazy">`
+        : `<span class="no-img">&mdash;</span>`
+      }</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById('header-row').addEventListener('click', e => {
+  const th = e.target.closest('th[data-col]');
+  if (!th) return;
+  const col = th.dataset.col;
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = 1; }
+  document.querySelectorAll('th').forEach(t => t.classList.remove('sorted'));
+  th.classList.add('sorted');
+  th.querySelector('.sort-arrow').textContent = sortDir === 1 ? '\u2191' : '\u2193';
+  render();
+});
+
+document.getElementById('filter-row').addEventListener('input', e => {
+  const input = e.target.closest('.col-filter');
+  if (!input) return;
+  filters[input.dataset.col] = input.value;
+  render();
+});
+
+const searchInput = document.getElementById('search-input');
+const searchClear = document.getElementById('search-clear');
+
+searchInput.addEventListener('input', e => {
+  globalSearch = e.target.value;
+  searchClear.classList.toggle('visible', !!globalSearch);
+  render();
+});
+
+searchClear.addEventListener('click', () => {
+  searchInput.value = '';
+  globalSearch = '';
+  searchClear.classList.remove('visible');
+  render();
+  searchInput.focus();
+});
+
+async function init() {
+  try {
+    const res  = await fetch('airport_large.csv');
+    const text = await res.text();
+    allRows = parseCSV(text);
+    document.getElementById('total-count').textContent = allRows.length;
+    render();
+  } catch(e) {
+    document.getElementById('tbody').innerHTML =
+      '<tr><td colspan="7" style="color:var(--dim);padding:24px">Failed to load CSV — open with Live Server</td></tr>';
+  }
+}
+
+init();
+
+function toggleSection(id) {
+  document.getElementById('body-'  + id).classList.toggle('open');
+  document.getElementById('arrow-' + id).classList.toggle('open');
+}
+</script>
+</body>
+</html>
